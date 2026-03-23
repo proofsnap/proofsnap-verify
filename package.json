@@ -1,0 +1,50 @@
+{
+  "name": "proofsnap-verify",
+  "version": "1.0.0",
+  "description": "Open-source verification tool for ProofSnap evidence packages. Independently verify SHA-256 hashes, RSA-4096 signatures, OpenTimestamps, and eIDAS qualified timestamps.",
+  "main": "dist/verify.js",
+  "types": "dist/verify.d.ts",
+  "bin": {
+    "proofsnap-verify": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "homepage": "https://github.com/proofsnap/proofsnap-verify",
+  "bugs": "https://github.com/proofsnap/proofsnap-verify/issues",
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "proofsnap",
+    "evidence",
+    "verification",
+    "sha256",
+    "opentimestamps",
+    "eidas",
+    "digital-forensics",
+    "blockchain",
+    "timestamp"
+  ],
+  "author": "ProofSnap <support@getproofsnap.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/proofsnap/proofsnap-verify"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "opentimestamps": "^0.4.9"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}

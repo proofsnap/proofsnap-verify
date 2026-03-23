@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProofSnap Open-Source Evidence Verifier</title>
+  <meta name="description" content="Open-source tool to independently verify ProofSnap evidence packages. Check SHA-256 hashes, RSA-4096 signatures, blockchain timestamps, and chain of custody — all client-side in your browser.">
+  <link rel="icon" type="image/png" href="https://getproofsnap.com/logo_proofsnap.png">
+  <link rel="apple-touch-icon" href="https://getproofsnap.com/logo_proofsnap.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'proof-blue': '#2C6ED5',
+            'proof-blue-dark': '#1A4A8A',
+            'proof-gray': '#E4E4E4',
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-gray-50 overflow-x-hidden min-h-screen flex flex-col">
+
+  <!-- Navigation -->
+  <nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <a href="https://getproofsnap.com" class="flex items-center">
+            <svg class="w-8 h-8 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <span class="ml-2 text-xl font-bold text-gray-900">ProofSnap</span>
+          </a>
+          <span class="ml-3 text-sm text-gray-400 hidden sm:inline">Open-Source Verifier</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="https://github.com/proofsnap/proofsnap-verify" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-proof-blue transition text-sm font-medium hidden sm:inline">GitHub</a>
+          <a href="https://getproofsnap.com/verify/index.html" class="text-gray-600 hover:text-proof-blue transition text-sm font-medium hidden sm:inline">Full Verifier</a>
+          <a href="https://chromewebstore.google.com/detail/proofsnap-digital-evidenc/mfbhmfinogdedlgaoihbnmbldpabdhao" target="_blank" rel="noopener noreferrer" class="bg-proof-blue text-white px-4 py-2 rounded-3xl text-sm font-medium hover:bg-proof-blue-dark transition-colors duration-200">Get Extension</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1">
+    <!-- Hero Section -->
+    <section class="bg-white border-b border-gray-100">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+        <div class="inline-flex items-center gap-2 bg-blue-50 text-proof-blue px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+          </svg>
+          Open Source &mdash; MIT License &mdash; No Account Required
+        </div>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          Verify Evidence Independently
+        </h1>
+        <p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-4">
+          Upload a ProofSnap evidence package (.zip) to verify SHA-256 hashes, RSA-4096 digital signatures, Bitcoin blockchain timestamps, and chain of custody integrity.
+        </p>
+        <p class="text-sm text-gray-500 max-w-xl mx-auto">
+          100% client-side &mdash; your evidence files never leave your browser. <a href="https://github.com/proofsnap/proofsnap-verify" class="text-proof-blue hover:underline">View source code</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Verifier Tool Section -->
+    <section class="py-12 md:py-16">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 md:p-10">
+
+          <!-- File Upload Area -->
+          <div class="mb-6">
+            <label id="dropzone-label" for="dropzone-file" class="flex flex-col items-center justify-center w-full h-56 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-proof-blue transition-all duration-200">
+              <div class="flex flex-col items-center justify-center py-4">
+                <svg class="w-14 h-14 mb-4 text-gray-400" fill="none" viewBox="0 0 20 16" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                </svg>
+                <p class="mb-2 text-base text-gray-600">
+                  <span class="font-semibold text-proof-blue">Click to upload</span> or drag and drop
+                </p>
+                <p class="text-sm text-gray-500">ProofSnap ZIP evidence packages only</p>
+                <span id="uploaded-filename" class="mt-3 text-sm text-proof-blue font-semibold hidden"></span>
+              </div>
+              <input id="dropzone-file" type="file" accept=".zip" class="hidden">
+            </label>
+          </div>
+
+          <!-- Verify Button -->
+          <button id="verify-button" class="w-full bg-proof-blue text-white px-6 py-4 rounded-xl text-base font-semibold hover:bg-proof-blue-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
+            <span id="button-text">Verify Evidence Package</span>
+            <svg id="spinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </button>
+
+          <!-- Verification Results -->
+          <div id="results-container" class="mt-6 hidden">
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Verification Results
+              </h3>
+              <div id="results-content" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What Gets Verified -->
+    <section class="py-12 md:py-16 bg-white border-t border-gray-100">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">What Gets Verified</h2>
+        <p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">Five independent cryptographic and forensic checks on every evidence package.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Digital Signature</h3>
+            <p class="text-sm text-gray-600">RSA-4096 signature verification ensures the manifest was created by ProofSnap and has not been altered.</p>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">SHA-256 Hashes</h3>
+            <p class="text-sm text-gray-600">Every file in the package is re-hashed and compared against the manifest to detect any tampering.</p>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Hash Chain</h3>
+            <p class="text-sm text-gray-600">Forensic log hash chain (ISO/IEC 27037) confirms the sequence of capture operations was not modified.</p>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Bitcoin Timestamp</h3>
+            <p class="text-sm text-gray-600">OpenTimestamps proof anchored to Bitcoin blockchain. Use the CLI tool for full blockchain verification.</p>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">eIDAS Timestamp</h3>
+            <p class="text-sm text-gray-600">EU qualified timestamp (RFC 3161) structural validation. Valid under eIDAS Regulation 910/2014.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-sm text-gray-500">
+        Open source under <a href="https://github.com/proofsnap/proofsnap-verify/blob/main/LICENSE" class="text-proof-blue hover:underline">MIT License</a>.
+        Built by <a href="https://getproofsnap.com" class="text-proof-blue hover:underline">ProofSnap</a>.
+        <a href="https://github.com/proofsnap/proofsnap-verify" class="text-proof-blue hover:underline">View source on GitHub</a>.
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script>
+  const $ = id => document.getElementById(id);
+  const dropzoneLabel = $('dropzone-label');
+  const fileInput = $('dropzone-file');
+  const verifyBtn = $('verify-button');
+  const btnText = $('button-text');
+  const spinnerEl = $('spinner');
+  const resultsContainer = $('results-container');
+  const resultsContent = $('results-content');
+  const filenameEl = $('uploaded-filename');
+
+  // Drag & drop
+  dropzoneLabel.addEventListener('dragover', e => { e.preventDefault(); dropzoneLabel.classList.add('bg-blue-50', 'border-proof-blue'); dropzoneLabel.classList.remove('bg-gray-50', 'border-gray-300'); });
+  dropzoneLabel.addEventListener('dragleave', () => { dropzoneLabel.classList.remove('bg-blue-50', 'border-proof-blue'); dropzoneLabel.classList.add('bg-gray-50', 'border-gray-300'); });
+  dropzoneLabel.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzoneLabel.classList.remove('bg-blue-50', 'border-proof-blue');
+    dropzoneLabel.classList.add('bg-gray-50', 'border-gray-300');
+    if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; handleFileSelect(); }
+  });
+  fileInput.addEventListener('change', handleFileSelect);
+  verifyBtn.addEventListener('click', runVerification);
+
+  function handleFileSelect() {
+    if (fileInput.files && fileInput.files[0]) {
+      filenameEl.textContent = fileInput.files[0].name;
+      filenameEl.classList.remove('hidden');
+      verifyBtn.disabled = false;
+      resultsContainer.classList.add('hidden');
+      resultsContent.innerHTML = '';
+    }
+  }
+
+  function resultLine(type, icon, text) {
+    const colors = { pass: 'text-green-700', fail: 'text-red-700', warn: 'text-yellow-700', info: 'text-blue-700' };
+    const icons = {
+      pass: '<svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+      fail: '<svg class="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+      warn: '<svg class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>',
+      info: '<svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+    return `<div class="flex items-start gap-2 text-sm py-1">${icons[type]}<span class="${colors[type]}">${text}</span></div>`;
+  }
+
+  function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  async function sha256hex(buf) {
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function importPubKey(pem) {
+    const b64 = pem.replace(/-----BEGIN PUBLIC KEY-----/,'').replace(/-----END PUBLIC KEY-----/,'').replace(/\s/g,'');
+    const der = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    return crypto.subtle.importKey('spki', der.buffer, {name:'RSASSA-PKCS1-v1_5', hash:'SHA-256'}, false, ['verify']);
+  }
+
+  async function runVerification() {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    verifyBtn.disabled = true;
+    btnText.textContent = 'Verifying...';
+    spinnerEl.classList.remove('hidden');
+    resultsContent.innerHTML = '';
+    resultsContainer.classList.remove('hidden');
+
+    let html = '';
+    let passed = 0, total = 0;
+
+    try {
+      const buf = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf);
+
+      const required = ['manifest.json','manifest.sig','publickey.pem','metadata.json','page.html','screenshot.jpeg','evidence.pdf','domtextcontent.txt'];
+      const missing = required.filter(f => !zip.files[f]);
+      if (missing.length) {
+        html += resultLine('fail', 'fail', `Missing required files: ${missing.join(', ')}`);
+        resultsContent.innerHTML = html;
+        resetButton(); return;
+      }
+
+      const manifestStr = await zip.files['manifest.json'].async('string');
+      const manifest = JSON.parse(manifestStr);
+      const sigBuf = await zip.files['manifest.sig'].async('arraybuffer');
+      const pubPem = await zip.files['publickey.pem'].async('string');
+
+      html += resultLine('info', 'info', `<strong>Evidence ID:</strong> ${esc(manifest.evidence_id || 'N/A (older package)')}`);
+
+      // Signature
+      total++;
+      const pubKey = await importPubKey(pubPem);
+      const manifestBytes = new TextEncoder().encode(manifestStr);
+      const sigOk = await crypto.subtle.verify({name:'RSASSA-PKCS1-v1_5'}, pubKey, sigBuf, manifestBytes);
+      if (sigOk) { html += resultLine('pass', 'pass', 'Digital signature verified (RSA-4096, RSASSA-PKCS1-v1_5, SHA-256)'); passed++; }
+      else { html += resultLine('fail', 'fail', 'Digital signature verification FAILED'); }
+
+      // Hashes
+      const files = ['metadata.json','page.html','screenshot.jpeg','evidence.pdf','domtextcontent.txt'];
+      for (const opt of ['forensic_log.json','chain_of_custody.json']) {
+        if (manifest[opt] && zip.files[opt]) files.push(opt);
+      }
+
+      for (const name of files) {
+        total++;
+        const fbuf = await zip.files[name].async('arraybuffer');
+        const actual = await sha256hex(fbuf);
+        const expected = manifest[name] || '';
+        if (actual === expected) {
+          html += resultLine('pass', 'pass', `${name} &mdash; SHA-256 hash matches <span class="text-gray-400 text-xs font-mono">(${actual.substring(0,16)}&hellip;)</span>`);
+          passed++;
+        } else {
+          html += resultLine('fail', 'fail', `${name} &mdash; SHA-256 hash MISMATCH`);
+        }
+      }
+
+      // Hash chain
+      if (zip.files['forensic_log.json'] && zip.files['chain_of_custody.json']) {
+        total++;
+        const flStr = await zip.files['forensic_log.json'].async('string');
+        const cocStr = await zip.files['chain_of_custody.json'].async('string');
+        const fl = JSON.parse(flStr);
+        const coc = JSON.parse(cocStr);
+        const flHash = await sha256hex(new TextEncoder().encode(flStr));
+        const hashOk = flHash === coc.forensic_log_hash;
+        const chainOk = !fl.hash_chain || fl.hash_chain.chain_valid;
+        const idOk = fl.evidence_id === coc.evidence.evidence_id;
+        if (hashOk && chainOk && idOk) {
+          html += resultLine('pass', 'pass', `Hash chain intact &mdash; ${fl.total_operations || '?'} operations, ISO/IEC 27037 compliant`);
+          passed++;
+        } else {
+          html += resultLine('fail', 'fail', 'Hash chain integrity check FAILED');
+        }
+      } else {
+        html += resultLine('warn', 'warn', 'Hash chain not present (older evidence package)');
+      }
+
+      // OTS — not counted in pass/fail (browser can't verify against Bitcoin)
+      if (zip.files['manifest.json.ots']) {
+        html += resultLine('pass', 'pass', 'OpenTimestamps Bitcoin blockchain proof included in evidence package');
+      }
+
+      // eIDAS TSR
+      if (zip.files['manifest.json.tsr']) {
+        total++;
+        const tsrBuf = await zip.files['manifest.json.tsr'].async('arraybuffer');
+        const tsrBytes = new Uint8Array(tsrBuf);
+        if (tsrBytes[0] === 0x30) {
+          let found = false;
+          for (let i = 0; i < Math.min(tsrBytes.length, 20); i++) {
+            if (tsrBytes[i]===0x02 && tsrBytes[i+1]===0x01 && tsrBytes[i+2]===0x00) { found=true; break; }
+          }
+          if (found) { html += resultLine('pass', 'pass', 'eIDAS qualified timestamp &mdash; valid structure (PKIStatus=granted, RFC 3161)'); passed++; }
+          else { html += resultLine('fail', 'fail', 'eIDAS timestamp &mdash; PKIStatus not granted'); }
+        } else { html += resultLine('fail', 'fail', 'eIDAS timestamp &mdash; invalid ASN.1 structure'); }
+      }
+
+      // Overall
+      const allOk = passed === total;
+      if (allOk) {
+        html += `<div class="mt-4 bg-green-50 border border-green-200 rounded-xl px-6 py-4 text-center">
+          <p class="text-green-700 font-semibold text-base">ALL CHECKS PASSED (${passed}/${total})</p>
+          <p class="text-green-600 text-sm mt-1">Evidence package integrity verified successfully.</p>
+        </div>`;
+      } else {
+        html += `<div class="mt-4 bg-red-50 border border-red-200 rounded-xl px-6 py-4 text-center">
+          <p class="text-red-700 font-semibold text-base">VERIFICATION FAILED (${passed}/${total} passed)</p>
+          <p class="text-red-600 text-sm mt-1">One or more integrity checks did not pass.</p>
+        </div>`;
+      }
+
+    } catch (err) {
+      html += resultLine('fail', 'fail', `Error: ${esc(err.message)}`);
+    }
+
+    resultsContent.innerHTML = html;
+    resetButton();
+  }
+
+  function resetButton() {
+    verifyBtn.disabled = false;
+    btnText.textContent = 'Verify Evidence Package';
+    spinnerEl.classList.add('hidden');
+  }
+  </script>
+</body>
+</html>

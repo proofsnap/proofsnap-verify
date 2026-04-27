@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ProofSnap Open-Source Evidence Verifier</title>
-  <meta name="description" content="Open-source tool to independently verify ProofSnap evidence packages. Check SHA-256 hashes, RSA-4096 signatures, blockchain timestamps, and chain of custody — all client-side in your browser.">
+  <meta name="description" content="Open-source tool to independently verify ProofSnap evidence packages, file + eIDAS timestamps, and standalone qualified time-stamp tokens. Client-side, no upload, MIT-licensed.">
   <link rel="icon" type="image/png" href="https://getproofsnap.com/logo_proofsnap.png">
   <link rel="apple-touch-icon" href="https://getproofsnap.com/logo_proofsnap.png">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -39,7 +39,6 @@
         </div>
         <div class="flex items-center gap-4">
           <a href="https://github.com/proofsnap/proofsnap-verify" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-proof-blue transition text-sm font-medium hidden sm:inline">GitHub</a>
-          <a href="https://getproofsnap.com/verify/index.html" class="text-gray-600 hover:text-proof-blue transition text-sm font-medium hidden sm:inline">Full Verifier</a>
           <a href="https://chromewebstore.google.com/detail/proofsnap-digital-evidenc/mfbhmfinogdedlgaoihbnmbldpabdhao" target="_blank" rel="noopener noreferrer" class="bg-proof-blue text-white px-4 py-2 rounded-3xl text-sm font-medium hover:bg-proof-blue-dark transition-colors duration-200">Get Extension</a>
         </div>
       </div>
@@ -49,7 +48,7 @@
   <main class="flex-1">
     <!-- Hero Section -->
     <section class="bg-white border-b border-gray-100">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
         <div class="inline-flex items-center gap-2 bg-blue-50 text-proof-blue px-4 py-1.5 rounded-full text-sm font-medium mb-6">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
@@ -57,52 +56,107 @@
           Open Source &mdash; MIT License &mdash; No Account Required
         </div>
         <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-          Verify Evidence Independently
+          Don't trust us. Trust the math.
         </h1>
         <p class="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mb-4">
-          Upload a ProofSnap evidence package (.zip) to verify SHA-256 hashes, RSA-4096 digital signatures, Bitcoin blockchain timestamps, and chain of custody integrity.
+          The only free, browser-based verifier for ProofSnap evidence ZIPs, file + eIDAS timestamps, and any RFC 3161 qualified time-stamp token from any EU TSA.
         </p>
         <p class="text-sm text-gray-500 max-w-xl mx-auto">
-          100% client-side &mdash; your evidence files never leave your browser. <a href="https://github.com/proofsnap/proofsnap-verify" class="text-proof-blue hover:underline">View source code</a>.
+          100% client-side &mdash; nothing is uploaded. <a href="https://github.com/proofsnap/proofsnap-verify" class="text-proof-blue hover:underline">View source code</a>.
         </p>
       </div>
     </section>
 
     <!-- Verifier Tool Section -->
-    <section class="py-12 md:py-16">
+    <section class="py-10 md:py-14">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 md:p-10">
 
-          <!-- File Upload Area -->
-          <div class="mb-6">
-            <label id="dropzone-label" for="dropzone-file" class="flex flex-col items-center justify-center w-full h-56 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-proof-blue transition-all duration-200">
-              <div class="flex flex-col items-center justify-center py-4">
-                <svg class="w-14 h-14 mb-4 text-gray-400" fill="none" viewBox="0 0 20 16" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                </svg>
-                <p class="mb-2 text-base text-gray-600">
-                  <span class="font-semibold text-proof-blue">Click to upload</span> or drag and drop
-                </p>
-                <p class="text-sm text-gray-500">ProofSnap ZIP evidence packages only</p>
-                <span id="uploaded-filename" class="mt-3 text-sm text-proof-blue font-semibold hidden"></span>
-              </div>
-              <input id="dropzone-file" type="file" accept=".zip" class="hidden">
-            </label>
+          <!-- Mode Tabs -->
+          <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
+            <button data-mode="zip" class="mode-tab px-4 py-3 text-sm font-semibold border-b-2 border-proof-blue text-proof-blue">
+              Evidence ZIP
+            </button>
+            <button data-mode="file-tsr" class="mode-tab px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+              File + Timestamp
+            </button>
+            <button data-mode="inspect" class="mode-tab px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+              Inspect Timestamp
+            </button>
           </div>
 
-          <!-- Verify Button -->
-          <button id="verify-button" class="w-full bg-proof-blue text-white px-6 py-4 rounded-xl text-base font-semibold hover:bg-proof-blue-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
-            <span id="button-text">Verify Evidence Package</span>
-            <svg id="spinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </button>
+          <!-- Mode: ZIP -->
+          <div id="panel-zip" class="mode-panel">
+            <p class="text-sm text-gray-600 mb-4">Upload a ProofSnap evidence ZIP to verify the digital signature, every file hash, the forensic chain of custody, and the embedded blockchain + eIDAS timestamps.</p>
+            <label id="zip-dropzone-label" for="zip-file-input" class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-proof-blue transition-all duration-200">
+              <div class="flex flex-col items-center justify-center py-4">
+                <svg class="w-12 h-12 mb-3 text-gray-400" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                <p class="mb-2 text-base text-gray-600"><span class="font-semibold text-proof-blue">Click to upload</span> or drag and drop</p>
+                <p class="text-sm text-gray-500">ProofSnap evidence ZIP</p>
+                <span id="zip-filename" class="mt-3 text-sm text-proof-blue font-semibold hidden"></span>
+              </div>
+              <input id="zip-file-input" type="file" accept=".zip" class="hidden">
+            </label>
+            <button id="zip-verify-button" class="w-full mt-4 bg-proof-blue text-white px-6 py-4 rounded-xl text-base font-semibold hover:bg-proof-blue-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
+              <span>Verify Evidence Package</span>
+            </button>
+          </div>
 
-          <!-- Verification Results -->
+          <!-- Mode: File + TSR -->
+          <div id="panel-file-tsr" class="mode-panel hidden">
+            <p class="text-sm text-gray-600 mb-4">Upload any file plus its <code class="text-xs bg-gray-100 px-1 py-0.5 rounded">.tsr</code> qualified time-stamp token. The verifier confirms the token covers exactly that file, validates the TSA signature, and identifies the issuing authority.</p>
+            <div class="grid md:grid-cols-2 gap-4">
+              <label id="ft-file-dropzone" for="ft-file-input" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-proof-blue transition-all duration-200">
+                <div class="flex flex-col items-center justify-center py-3 px-2 text-center">
+                  <svg class="w-10 h-10 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                  <p class="text-sm text-gray-600"><span class="font-semibold text-proof-blue">Original file</span></p>
+                  <p class="text-xs text-gray-500">any format</p>
+                  <span id="ft-file-name" class="mt-2 text-xs text-proof-blue font-semibold hidden break-all"></span>
+                </div>
+                <input id="ft-file-input" type="file" class="hidden">
+              </label>
+              <label id="ft-tsr-dropzone" for="ft-tsr-input" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-proof-blue transition-all duration-200">
+                <div class="flex flex-col items-center justify-center py-3 px-2 text-center">
+                  <svg class="w-10 h-10 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <p class="text-sm text-gray-600"><span class="font-semibold text-proof-blue">.tsr file</span></p>
+                  <p class="text-xs text-gray-500">RFC 3161 token</p>
+                  <span id="ft-tsr-name" class="mt-2 text-xs text-proof-blue font-semibold hidden break-all"></span>
+                </div>
+                <input id="ft-tsr-input" type="file" accept=".tsr" class="hidden">
+              </label>
+            </div>
+            <button id="ft-verify-button" class="w-full mt-4 bg-proof-blue text-white px-6 py-4 rounded-xl text-base font-semibold hover:bg-proof-blue-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
+              <span>Verify File + Timestamp</span>
+            </button>
+          </div>
+
+          <!-- Mode: Inspect TSR -->
+          <div id="panel-inspect" class="mode-panel hidden">
+            <p class="text-sm text-gray-600 mb-4">Upload any RFC 3161 <code class="text-xs bg-gray-100 px-1 py-0.5 rounded">.tsr</code> token. The verifier extracts the issuing TSA, the timestamped hash, the policy OID, and validates the structure cryptographically. No original file required.</p>
+            <label id="ins-dropzone-label" for="ins-tsr-input" class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-blue-50 hover:border-proof-blue transition-all duration-200">
+              <div class="flex flex-col items-center justify-center py-4">
+                <svg class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="mb-2 text-base text-gray-600"><span class="font-semibold text-proof-blue">Click to upload</span> or drag and drop</p>
+                <p class="text-sm text-gray-500">.tsr (RFC 3161 time-stamp token)</p>
+                <span id="ins-filename" class="mt-3 text-sm text-proof-blue font-semibold hidden"></span>
+              </div>
+              <input id="ins-tsr-input" type="file" accept=".tsr" class="hidden">
+            </label>
+            <button id="ins-verify-button" class="w-full mt-4 bg-proof-blue text-white px-6 py-4 rounded-xl text-base font-semibold hover:bg-proof-blue-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
+              <span>Inspect Timestamp</span>
+            </button>
+          </div>
+
+          <!-- Spinner overlay -->
+          <div id="working-indicator" class="hidden mt-4 text-center text-sm text-gray-500">
+            <svg class="inline w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Working...
+          </div>
+
+          <!-- Results -->
           <div id="results-container" class="mt-6 hidden">
             <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -114,6 +168,8 @@
               <div id="results-content" class="space-y-2"></div>
             </div>
           </div>
+
+          <p class="mt-4 text-xs text-gray-400">For full LTV verification (online OCSP fetch + EUTL trust resolution), use the CLI: <code class="bg-gray-100 px-1 py-0.5 rounded">npx proofsnap-verify</code>.</p>
         </div>
       </div>
     </section>
@@ -122,49 +178,103 @@
     <section class="py-12 md:py-16 bg-white border-t border-gray-100">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">What Gets Verified</h2>
-        <p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">Five independent cryptographic and forensic checks on every evidence package.</p>
+        <p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">Independent cryptographic checks across three input modes. No vendor lock-in &mdash; verify ProofSnap evidence and qualified timestamps from any EU TSA.</p>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">Digital Signature</h3>
-            <p class="text-sm text-gray-600">RSA-4096 signature verification ensures the manifest was created by ProofSnap and has not been altered.</p>
+            <p class="text-sm text-gray-600">RSA-4096 signature on the ProofSnap manifest, plus RSA / ECDSA signatures inside any RFC 3161 timestamp token.</p>
           </div>
           <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">SHA-256 Hashes</h3>
-            <p class="text-sm text-gray-600">Every file in the package is re-hashed and compared against the manifest to detect any tampering.</p>
+            <h3 class="font-semibold text-gray-900 mb-2">SHA-256 Hash Match</h3>
+            <p class="text-sm text-gray-600">Every file in the package &mdash; or your standalone file &mdash; is re-hashed and compared with the timestamp's message imprint.</p>
           </div>
           <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">Hash Chain</h3>
-            <p class="text-sm text-gray-600">Forensic log hash chain (ISO/IEC 27037) confirms the sequence of capture operations was not modified.</p>
+            <p class="text-sm text-gray-600">Forensic log hash chain (ISO/IEC 27037) confirms the sequence of capture operations was not modified after the fact.</p>
           </div>
           <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <h3 class="font-semibold text-gray-900 mb-2">Bitcoin Timestamp</h3>
-            <p class="text-sm text-gray-600">OpenTimestamps proof anchored to Bitcoin blockchain. Use the CLI tool for full blockchain verification.</p>
+            <p class="text-sm text-gray-600">OpenTimestamps proof anchored to Bitcoin blockchain (full chain verification via the CLI tool).</p>
           </div>
           <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
-            <h3 class="font-semibold text-gray-900 mb-2">eIDAS Timestamp</h3>
-            <p class="text-sm text-gray-600">EU qualified timestamp (RFC 3161) structural validation. Valid under eIDAS Regulation 910/2014.</p>
+            <h3 class="font-semibold text-gray-900 mb-2">eIDAS Qualified Timestamp</h3>
+            <p class="text-sm text-gray-600">RFC 3161 token signature, certificate chain, TSA identity, policy OID and (with LTV) OCSP revocation status.</p>
           </div>
+          <div class="bg-gray-50 rounded-xl p-6 border border-gray-100">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-proof-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Any EU TSA</h3>
+            <p class="text-sm text-gray-600">Inspect mode works on any RFC 3161 qualified timestamp from any EU Trust Service Provider &mdash; not just ProofSnap.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- eIDAS Differentiator -->
+    <section class="py-12 md:py-16 bg-gradient-to-br from-blue-50 to-white border-t border-gray-100">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+          <div class="inline-flex items-center gap-2 bg-proof-blue text-white px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+            The only Chrome extension with EU qualified timestamps
+          </div>
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Legally binding in all 27 EU member states</h2>
+          <p class="text-gray-600 max-w-2xl mx-auto">ProofSnap uses eIDAS qualified timestamps issued by an accredited EU Trust Service Provider. This isn't just blockchain &mdash; it's a legal standard with automatic court recognition.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div class="bg-white rounded-xl border-2 border-proof-blue p-6">
+            <h3 class="font-bold text-proof-blue mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              With eIDAS qualified timestamp
+            </h3>
+            <ul class="space-y-3 text-sm">
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span><strong>Opponent</strong> must prove your evidence is fake</span></li>
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Legal presumption of accuracy (Art. 42 eIDAS)</span></li>
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Valid in all 27 EU states &mdash; automatic recognition</span></li>
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>No expert witness needed to explain the technology</span></li>
+            </ul>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-bold text-gray-400 mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Without (regular screenshot or blockchain-only)
+            </h3>
+            <ul class="space-y-3 text-sm text-gray-500">
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span><strong>You</strong> must prove your evidence is real</span></li>
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>No legal presumption &mdash; judge decides case by case</span></li>
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Recognition varies by country and court</span></li>
+              <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>May need expert witness to explain blockchain</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="text-center mt-8">
+          <a href="https://chromewebstore.google.com/detail/proofsnap-digital-evidenc/mfbhmfinogdedlgaoihbnmbldpabdhao" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-proof-blue text-white px-8 py-3 rounded-3xl text-base font-medium hover:bg-proof-blue-dark transition-colors duration-200">
+            Start Free Trial &mdash; 7 Days
+          </a>
+          <p class="text-xs text-gray-400 mt-3">eIDAS qualified timestamps available on Professional, Enterprise &amp; Company plans</p>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="bg-white border-t border-gray-200 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <p class="text-sm text-gray-500">
@@ -177,39 +287,19 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script>
+  /* ========================================================================
+   * Shared utilities
+   * ====================================================================== */
   const $ = id => document.getElementById(id);
-  const dropzoneLabel = $('dropzone-label');
-  const fileInput = $('dropzone-file');
-  const verifyBtn = $('verify-button');
-  const btnText = $('button-text');
-  const spinnerEl = $('spinner');
-  const resultsContainer = $('results-container');
-  const resultsContent = $('results-content');
-  const filenameEl = $('uploaded-filename');
+  const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
+  const hex = bytes => Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
 
-  // Drag & drop
-  dropzoneLabel.addEventListener('dragover', e => { e.preventDefault(); dropzoneLabel.classList.add('bg-blue-50', 'border-proof-blue'); dropzoneLabel.classList.remove('bg-gray-50', 'border-gray-300'); });
-  dropzoneLabel.addEventListener('dragleave', () => { dropzoneLabel.classList.remove('bg-blue-50', 'border-proof-blue'); dropzoneLabel.classList.add('bg-gray-50', 'border-gray-300'); });
-  dropzoneLabel.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzoneLabel.classList.remove('bg-blue-50', 'border-proof-blue');
-    dropzoneLabel.classList.add('bg-gray-50', 'border-gray-300');
-    if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; handleFileSelect(); }
-  });
-  fileInput.addEventListener('change', handleFileSelect);
-  verifyBtn.addEventListener('click', runVerification);
-
-  function handleFileSelect() {
-    if (fileInput.files && fileInput.files[0]) {
-      filenameEl.textContent = fileInput.files[0].name;
-      filenameEl.classList.remove('hidden');
-      verifyBtn.disabled = false;
-      resultsContainer.classList.add('hidden');
-      resultsContent.innerHTML = '';
-    }
+  async function sha256hex(buf) {
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return hex(new Uint8Array(hash));
   }
 
-  function resultLine(type, icon, text) {
+  function resultLine(type, text) {
     const colors = { pass: 'text-green-700', fail: 'text-red-700', warn: 'text-yellow-700', info: 'text-blue-700' };
     const icons = {
       pass: '<svg class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
@@ -220,146 +310,657 @@
     return `<div class="flex items-start gap-2 text-sm py-1">${icons[type]}<span class="${colors[type]}">${text}</span></div>`;
   }
 
-  function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-  async function sha256hex(buf) {
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  function showResults(html) {
+    $('results-content').innerHTML = html;
+    $('results-container').classList.remove('hidden');
   }
+
+  function setBusy(busy) {
+    $('working-indicator').classList.toggle('hidden', !busy);
+  }
+
+  /* ========================================================================
+   * Minimal ASN.1 DER parser (browser port of asn1.ts)
+   * ====================================================================== */
+  function parseAsn1(buf, offset = 0) {
+    if (offset >= buf.length) throw new Error('ASN.1: unexpected end');
+    const tag = buf[offset];
+    const constructed = (tag & 0x20) !== 0;
+    let pos = offset + 1;
+    let length;
+    if (buf[pos] < 0x80) { length = buf[pos]; pos += 1; }
+    else {
+      const numBytes = buf[pos] & 0x7f;
+      if (numBytes > 4) throw new Error('ASN.1: length too large');
+      length = 0; pos += 1;
+      for (let i = 0; i < numBytes; i++) length = (length << 8) | buf[pos + i];
+      pos += numBytes;
+    }
+    const data = buf.slice(pos, pos + length);
+    const totalLength = pos - offset + length;
+    const children = [];
+    if (constructed) {
+      let co = 0;
+      while (co < data.length) {
+        const c = parseAsn1(data, co);
+        children.push(c); co += c.totalLength;
+      }
+    }
+    return { tag, constructed, data, children, offset, totalLength };
+  }
+
+  function decodeOid(data) {
+    const parts = []; parts.push(Math.floor(data[0] / 40)); parts.push(data[0] % 40);
+    let v = 0;
+    for (let i = 1; i < data.length; i++) {
+      v = (v << 7) | (data[i] & 0x7f);
+      if ((data[i] & 0x80) === 0) { parts.push(v); v = 0; }
+    }
+    return parts.join('.');
+  }
+
+  function encodeAsn1Length(len) {
+    if (len < 0x80) return new Uint8Array([len]);
+    const bytes = []; let t = len;
+    while (t > 0) { bytes.unshift(t & 0xff); t >>= 8; }
+    return new Uint8Array([0x80 | bytes.length, ...bytes]);
+  }
+
+  function rebuildTlv(node) {
+    const lb = encodeAsn1Length(node.data.length);
+    const out = new Uint8Array(1 + lb.length + node.data.length);
+    out[0] = node.tag; out.set(lb, 1); out.set(node.data, 1 + lb.length);
+    return out;
+  }
+
+  function decodeAsString(node) {
+    if (node.tag === 0x1e) { // BMPString
+      let r = '';
+      for (let i = 0; i + 1 < node.data.length; i += 2) {
+        r += String.fromCharCode((node.data[i] << 8) | node.data[i + 1]);
+      }
+      return r;
+    }
+    if (node.tag === 0x0c) return new TextDecoder('utf-8').decode(node.data);
+    return new TextDecoder('ascii').decode(node.data);
+  }
+
+  function parseGeneralizedTime(bytes) {
+    const t = new TextDecoder('ascii').decode(bytes);
+    const m = t.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\.(\d+))?Z?$/);
+    if (!m) return null;
+    const [, y, mo, d, h, mi, s, frac] = m;
+    const ms = frac ? frac.padEnd(3, '0').substring(0, 3) : '000';
+    return `${y}-${mo}-${d}T${h}:${mi}:${s}.${ms}Z`;
+  }
+
+  function parseUtcTime(bytes) {
+    const t = new TextDecoder('ascii').decode(bytes);
+    const m = t.match(/^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z?$/);
+    if (!m) return null;
+    const [, y, mo, d, h, mi, s] = m;
+    const yyyy = parseInt(y, 10) >= 50 ? `19${y}` : `20${y}`;
+    return `${yyyy}-${mo}-${d}T${h}:${mi}:${s}.000Z`;
+  }
+
+  function parseTimeNode(n) {
+    if (n.tag === 0x17) return parseUtcTime(n.data);
+    if (n.tag === 0x18) return parseGeneralizedTime(n.data);
+    return null;
+  }
+
+  /* ========================================================================
+   * TSR / cert extraction
+   * ====================================================================== */
+  const HASH_OID = {
+    '2.16.840.1.101.3.4.2.1': 'SHA-256',
+    '2.16.840.1.101.3.4.2.2': 'SHA-384',
+    '2.16.840.1.101.3.4.2.3': 'SHA-512',
+    '1.3.14.3.2.26': 'SHA-1',
+  };
+  const SIG_OID_HASH = {
+    '1.2.840.113549.1.1.11': 'SHA-256',
+    '1.2.840.113549.1.1.12': 'SHA-384',
+    '1.2.840.113549.1.1.13': 'SHA-512',
+    '1.2.840.113549.1.1.5': 'SHA-1',
+  };
+
+  function getTstInfo(tsrRoot) {
+    try {
+      const tst = tsrRoot.children[1];
+      const sdw = tst.children[1];
+      const sd = sdw.children[0];
+      const ec = sd.children.find(c => c.tag === 0x30 && c.children[0]?.tag === 0x06 && decodeOid(c.children[0].data) === '1.2.840.113549.1.9.16.1.4');
+      if (!ec) return null;
+      const eContent = ec.children[1];
+      const oct = eContent.children[0];
+      return parseAsn1(oct.data);
+    } catch { return null; }
+  }
+
+  function getSignedData(tsrRoot) {
+    try { return tsrRoot.children[1].children[1].children[0]; } catch { return null; }
+  }
+
+  function extractTsrFields(tsrBytes) {
+    const root = parseAsn1(tsrBytes);
+    const tst = getTstInfo(root);
+    if (!tst) return null;
+    const messageImprint = tst.children[2];
+    const hashAlg = messageImprint?.children[0];
+    const hashOid = hashAlg?.children[0]?.tag === 0x06 ? decodeOid(hashAlg.children[0].data) : null;
+    const hashedMessage = messageImprint?.children[1];
+    const hash = hashedMessage?.tag === 0x04 ? hex(hashedMessage.data) : null;
+    const policy = tst.children[1];
+    const policyOid = policy?.tag === 0x06 ? decodeOid(policy.data) : null;
+    const serial = tst.children[3];
+    const serialHex = serial?.tag === 0x02 ? hex(serial.data) : null;
+    const genTime = tst.children[4];
+    const ts = genTime?.tag === 0x18 ? parseGeneralizedTime(genTime.data) : null;
+    return { hash, hashOid, policyOid, serialHex, timestampedAt: ts, root };
+  }
+
+  function extractEmbeddedCerts(tsrRoot) {
+    const sd = getSignedData(tsrRoot);
+    if (!sd) return [];
+    const certsContainer = sd.children.find(c => c.tag === 0xa0);
+    if (!certsContainer) return [];
+    return certsContainer.children.filter(n => n.tag === 0x30).map(rebuildTlv);
+  }
+
+  function parseDn(dn) {
+    let cn = null, o = null, ou = null, c = null;
+    for (const rdn of dn.children) {
+      if (rdn.tag !== 0x31) continue;
+      for (const atv of rdn.children) {
+        if (atv.tag !== 0x30 || atv.children.length < 2) continue;
+        const oidNode = atv.children[0];
+        if (oidNode.tag !== 0x06) continue;
+        const oid = decodeOid(oidNode.data);
+        const v = decodeAsString(atv.children[1]);
+        if (oid === '2.5.4.3' && !cn) cn = v;
+        else if (oid === '2.5.4.10' && !o) o = v;
+        else if (oid === '2.5.4.11' && !ou) ou = v;
+        else if (oid === '2.5.4.6' && !c) c = v;
+      }
+    }
+    return { cn, o, ou, c };
+  }
+
+  function extractCertInfo(certDer) {
+    try {
+      const cert = parseAsn1(certDer);
+      const tbs = cert.children[0];
+      let idx = 0;
+      if (tbs.children[0]?.tag === 0xa0) idx = 1;
+      const serial = tbs.children[idx];
+      const issuer = tbs.children[idx + 2];
+      const validity = tbs.children[idx + 3];
+      const subject = tbs.children[idx + 4];
+      return {
+        subject: subject ? parseDn(subject) : { cn: null, o: null, ou: null, c: null },
+        issuer: issuer ? parseDn(issuer) : { cn: null, o: null, ou: null, c: null },
+        serial: serial ? hex(serial.data) : null,
+        validFrom: validity?.children[0] ? parseTimeNode(validity.children[0]) : null,
+        validUntil: validity?.children[1] ? parseTimeNode(validity.children[1]) : null,
+      };
+    } catch { return null; }
+  }
+
+  function extractSpki(certDer) {
+    try {
+      const cert = parseAsn1(certDer);
+      const tbs = cert.children[0];
+      for (const ch of tbs.children) {
+        if (ch.tag === 0x30 && ch.children.length >= 2 && ch.children[0].tag === 0x30 && ch.children[1].tag === 0x03) {
+          return rebuildTlv(ch);
+        }
+      }
+      return null;
+    } catch { return null; }
+  }
+
+  function extractTbsAndSig(certDer) {
+    try {
+      const cert = parseAsn1(certDer);
+      const tbs = cert.children[0];
+      const sigAlg = cert.children[1];
+      const sigVal = cert.children[2];
+      if (!tbs || !sigAlg || !sigVal) return null;
+      return {
+        tbsBytes: rebuildTlv(tbs),
+        signatureBytes: sigVal.data.slice(1),
+        sigAlgOid: sigAlg.children[0] ? decodeOid(sigAlg.children[0].data) : '',
+      };
+    } catch { return null; }
+  }
+
+  function extractTsrSigData(tsrRoot) {
+    try {
+      const sd = getSignedData(tsrRoot);
+      const set = sd.children[sd.children.length - 1];
+      if (set.tag !== 0x31) return null;
+      const si = set.children[0];
+      let digestAlg = null, signedAttrs = null, signature = null;
+      for (const ch of si.children) {
+        if (ch.tag === 0x30 && !digestAlg && ch.children[0]?.tag === 0x06) digestAlg = ch;
+        if (ch.tag === 0xa0) signedAttrs = ch;
+        if (ch.tag === 0x04 && signedAttrs) signature = ch;
+      }
+      if (!signedAttrs || !signature || !digestAlg) return null;
+      const sa = rebuildTlv(signedAttrs); sa[0] = 0x31;
+      return {
+        signedAttrsBytes: sa,
+        signatureBytes: signature.data,
+        digestOid: digestAlg.children[0] ? decodeOid(digestAlg.children[0].data) : '',
+      };
+    } catch { return null; }
+  }
+
+  async function importSpkiKey(spki, hashAlg) {
+    return crypto.subtle.importKey('spki', spki.buffer.slice(spki.byteOffset, spki.byteOffset + spki.byteLength), { name: 'RSASSA-PKCS1-v1_5', hash: hashAlg }, false, ['verify']);
+  }
+
+  async function verifyTsrSignature(tsrBytes, leafCertDer) {
+    const tsrRoot = parseAsn1(tsrBytes);
+    const sigData = extractTsrSigData(tsrRoot);
+    if (!sigData) return false;
+    const spki = extractSpki(leafCertDer);
+    if (!spki) return false;
+    const hashAlg = HASH_OID[sigData.digestOid] || 'SHA-256';
+    try {
+      const key = await importSpkiKey(spki, hashAlg);
+      return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sigData.signatureBytes, sigData.signedAttrsBytes);
+    } catch { return false; }
+  }
+
+  async function verifyCertSignedBy(certDer, issuerDer) {
+    const cd = extractTbsAndSig(certDer);
+    if (!cd) return false;
+    const spki = extractSpki(issuerDer);
+    if (!spki) return false;
+    const hashAlg = SIG_OID_HASH[cd.sigAlgOid] || 'SHA-256';
+    try {
+      const key = await importSpkiKey(spki, hashAlg);
+      return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, cd.signatureBytes, cd.tbsBytes);
+    } catch { return false; }
+  }
+
+  async function verifyCertChain(certs) {
+    if (certs.length === 0) return false;
+    if (certs.length === 1) return true;
+    for (let i = 0; i < certs.length - 1; i++) {
+      if (!(await verifyCertSignedBy(certs[i], certs[i + 1]))) return false;
+    }
+    return verifyCertSignedBy(certs[certs.length - 1], certs[certs.length - 1]);
+  }
+
+  /* ========================================================================
+   * Inspect TSR (browser version, no LTV)
+   * ====================================================================== */
+  async function inspectTimestamp(tsrBytes, expectedHash) {
+    const fields = extractTsrFields(tsrBytes);
+    if (!fields) {
+      return { error: 'Failed to parse TSR — not a valid RFC 3161 token.' };
+    }
+    const certs = extractEmbeddedCerts(fields.root);
+    let leafInfo = null;
+    if (certs.length > 0) leafInfo = extractCertInfo(certs[0]);
+
+    let signatureValid = false, certChainValid = false;
+    if (certs.length > 0) {
+      try { signatureValid = await verifyTsrSignature(tsrBytes, certs[0]); } catch {}
+      try { certChainValid = await verifyCertChain(certs); } catch {}
+    }
+
+    const hashAlgName = fields.hashOid ? (HASH_OID[fields.hashOid] || `unknown(${fields.hashOid})`) : 'unknown';
+
+    let hashCovers = null;
+    if (expectedHash != null) {
+      hashCovers = (fields.hash || '').toLowerCase() === expectedHash.toLowerCase();
+    }
+
+    return {
+      tsa: leafInfo ? {
+        cn: leafInfo.subject.cn, o: leafInfo.subject.o, c: leafInfo.subject.c,
+        serial: leafInfo.serial, validFrom: leafInfo.validFrom, validUntil: leafInfo.validUntil,
+      } : null,
+      timestampedAt: fields.timestampedAt,
+      hashAlgorithm: hashAlgName,
+      messageImprint: fields.hash,
+      policyOid: fields.policyOid,
+      serialNumber: fields.serialHex,
+      signatureValid, certChainValid,
+      embeddedCertCount: certs.length,
+      hashCovers,
+      overallValid: signatureValid && certChainValid && (hashCovers !== false),
+    };
+  }
+
+  function renderInspection(insp) {
+    if (insp.error) return resultLine('fail', esc(insp.error));
+    let h = '';
+    if (insp.tsa) {
+      h += `<div class="bg-white border border-gray-200 rounded-lg p-3 mb-3">
+        <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Time-Stamp Authority</p>
+        <p class="text-sm font-semibold text-gray-900">${esc(insp.tsa.cn || '(no CN)')}</p>
+        <p class="text-xs text-gray-500">${esc(insp.tsa.o || '')} ${insp.tsa.c ? '&middot; ' + esc(insp.tsa.c) : ''}</p>
+        ${insp.tsa.validFrom ? `<p class="text-xs text-gray-400 mt-1">Cert valid: ${esc(insp.tsa.validFrom)} → ${esc(insp.tsa.validUntil || '?')}</p>` : ''}
+      </div>`;
+    } else {
+      h += resultLine('warn', 'No TSA certificate embedded — cannot identify issuer.');
+    }
+    if (insp.timestampedAt) h += resultLine('info', `Timestamped at <strong>${esc(insp.timestampedAt)}</strong>`);
+    h += resultLine('info', `Hash algorithm: ${esc(insp.hashAlgorithm)}`);
+    if (insp.messageImprint) h += resultLine('info', `Message imprint: <span class="font-mono text-xs">${esc(insp.messageImprint)}</span>`);
+    if (insp.policyOid) h += resultLine('info', `Policy OID: <span class="font-mono text-xs">${esc(insp.policyOid)}</span>`);
+    if (insp.serialNumber) h += resultLine('info', `Serial: <span class="font-mono text-xs">${esc(insp.serialNumber)}</span>`);
+
+    h += insp.signatureValid ? resultLine('pass', 'TSR signature verified') : resultLine('fail', 'TSR signature verification failed');
+    h += insp.certChainValid ? resultLine('pass', `Certificate chain consistent (${insp.embeddedCertCount} cert${insp.embeddedCertCount === 1 ? '' : 's'})`) : resultLine('fail', 'Certificate chain inconsistent');
+    h += resultLine('warn', 'OCSP / EUTL trust resolution not available in browser. Run <code class="bg-gray-100 px-1 rounded">npx proofsnap-verify</code> for full LTV.');
+
+    if (insp.hashCovers === true) h += resultLine('pass', 'Timestamp covers the expected file hash');
+    else if (insp.hashCovers === false) h += resultLine('fail', 'Timestamp does NOT cover the expected file hash');
+
+    if (insp.overallValid) h += `<div class="mt-4 bg-green-50 border border-green-200 rounded-xl px-6 py-3 text-center"><p class="text-green-700 font-semibold">TIMESTAMP VALID</p></div>`;
+    else h += `<div class="mt-4 bg-red-50 border border-red-200 rounded-xl px-6 py-3 text-center"><p class="text-red-700 font-semibold">TIMESTAMP INVALID</p></div>`;
+    return h;
+  }
+
+  /* ========================================================================
+   * Mode switching
+   * ====================================================================== */
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab').forEach(t => {
+        t.classList.remove('border-proof-blue', 'text-proof-blue');
+        t.classList.add('border-transparent', 'text-gray-500');
+      });
+      tab.classList.add('border-proof-blue', 'text-proof-blue');
+      tab.classList.remove('border-transparent', 'text-gray-500');
+      const mode = tab.dataset.mode;
+      $('panel-zip').classList.toggle('hidden', mode !== 'zip');
+      $('panel-file-tsr').classList.toggle('hidden', mode !== 'file-tsr');
+      $('panel-inspect').classList.toggle('hidden', mode !== 'inspect');
+      $('results-container').classList.add('hidden');
+      $('results-content').innerHTML = '';
+    });
+  });
+
+  /* ========================================================================
+   * Mode 1: ZIP
+   * ====================================================================== */
+  function attachDropzone(labelId, inputId, displayId, onSelect) {
+    const label = $(labelId), input = $(inputId), display = $(displayId);
+    label.addEventListener('dragover', e => { e.preventDefault(); label.classList.add('bg-blue-50', 'border-proof-blue'); });
+    label.addEventListener('dragleave', () => label.classList.remove('bg-blue-50', 'border-proof-blue'));
+    label.addEventListener('drop', e => {
+      e.preventDefault();
+      label.classList.remove('bg-blue-50', 'border-proof-blue');
+      if (e.dataTransfer.files[0]) { input.files = e.dataTransfer.files; onSelect(); }
+    });
+    input.addEventListener('change', onSelect);
+  }
+
+  let allCertHashes = [];
+  attachDropzone('zip-dropzone-label', 'zip-file-input', 'zip-filename', () => {
+    if ($('zip-file-input').files[0]) {
+      $('zip-filename').textContent = $('zip-file-input').files[0].name;
+      $('zip-filename').classList.remove('hidden');
+      $('zip-verify-button').disabled = false;
+    }
+  });
+  $('zip-verify-button').addEventListener('click', runZipVerification);
 
   async function importPubKey(pem) {
-    const b64 = pem.replace(/-----BEGIN PUBLIC KEY-----/,'').replace(/-----END PUBLIC KEY-----/,'').replace(/\s/g,'');
+    const b64 = pem.replace(/-----BEGIN PUBLIC KEY-----/, '').replace(/-----END PUBLIC KEY-----/, '').replace(/\s/g, '');
     const der = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    return crypto.subtle.importKey('spki', der.buffer, {name:'RSASSA-PKCS1-v1_5', hash:'SHA-256'}, false, ['verify']);
+    return crypto.subtle.importKey('spki', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
   }
 
-  async function runVerification() {
-    const file = fileInput.files[0];
-    if (!file) return;
-
-    verifyBtn.disabled = true;
-    btnText.textContent = 'Verifying...';
-    spinnerEl.classList.remove('hidden');
-    resultsContent.innerHTML = '';
-    resultsContainer.classList.remove('hidden');
-
+  async function verifySingleZip(buf) {
     let html = '';
     let passed = 0, total = 0;
-
     try {
-      const buf = await file.arrayBuffer();
       const zip = await JSZip.loadAsync(buf);
-
-      const required = ['manifest.json','manifest.sig','publickey.pem','metadata.json','page.html','screenshot.jpeg','evidence.pdf','domtextcontent.txt'];
-      const missing = required.filter(f => !zip.files[f]);
-      if (missing.length) {
-        html += resultLine('fail', 'fail', `Missing required files: ${missing.join(', ')}`);
-        resultsContent.innerHTML = html;
-        resetButton(); return;
-      }
+      const coreRequired = ['manifest.json', 'manifest.sig', 'publickey.pem'];
+      const coreMissing = coreRequired.filter(f => !zip.files[f]);
+      if (coreMissing.length) return resultLine('fail', `Missing required files: ${coreMissing.join(', ')}`);
 
       const manifestStr = await zip.files['manifest.json'].async('string');
-      const manifest = JSON.parse(manifestStr);
+      let manifest;
+      try { manifest = JSON.parse(manifestStr); } catch { return resultLine('fail', 'manifest.json is not valid JSON'); }
+      const isFileCert = manifest.file_sha256 !== undefined;
+
+      if (isFileCert) {
+        const safe = (manifest.file_sha256 || '').replace(/[^a-fA-F0-9]/g, '');
+        if (safe.length !== 64) return html + resultLine('fail', `Invalid file_sha256 (got ${safe.length} hex chars, expected 64)`);
+        html += resultLine('info', '<strong>Package type:</strong> File Certification');
+        html += resultLine('info', `<strong>Certified file hash:</strong> <span class="font-mono text-xs">${esc(safe)}</span>`);
+      } else {
+        const webRequired = ['metadata.json', 'page.html', 'screenshot.jpeg', 'evidence.pdf', 'domtextcontent.txt'];
+        const webMissing = webRequired.filter(f => !zip.files[f]);
+        if (webMissing.length) return html + resultLine('fail', `Missing required files: ${webMissing.join(', ')}`);
+        html += resultLine('info', '<strong>Package type:</strong> Web Capture');
+      }
+
       const sigBuf = await zip.files['manifest.sig'].async('arraybuffer');
       const pubPem = await zip.files['publickey.pem'].async('string');
+      html += resultLine('info', `<strong>Evidence ID:</strong> ${esc(manifest.evidence_id || 'N/A')}`);
 
-      html += resultLine('info', 'info', `<strong>Evidence ID:</strong> ${esc(manifest.evidence_id || 'N/A (older package)')}`);
-
-      // Signature
       total++;
       const pubKey = await importPubKey(pubPem);
       const manifestBytes = new TextEncoder().encode(manifestStr);
-      const sigOk = await crypto.subtle.verify({name:'RSASSA-PKCS1-v1_5'}, pubKey, sigBuf, manifestBytes);
-      if (sigOk) { html += resultLine('pass', 'pass', 'Digital signature verified (RSA-4096, RSASSA-PKCS1-v1_5, SHA-256)'); passed++; }
-      else { html += resultLine('fail', 'fail', 'Digital signature verification FAILED'); }
+      const sigOk = await crypto.subtle.verify({ name: 'RSASSA-PKCS1-v1_5' }, pubKey, sigBuf, manifestBytes);
+      if (sigOk) { html += resultLine('pass', 'Digital signature verified (RSA-4096)'); passed++; }
+      else html += resultLine('fail', 'Digital signature verification FAILED');
 
-      // Hashes
-      const files = ['metadata.json','page.html','screenshot.jpeg','evidence.pdf','domtextcontent.txt'];
-      for (const opt of ['forensic_log.json','chain_of_custody.json']) {
+      const files = isFileCert ? [] : ['metadata.json', 'page.html', 'screenshot.jpeg', 'evidence.pdf', 'domtextcontent.txt'];
+      for (const opt of ['forensic_log.json', 'chain_of_custody.json']) {
         if (manifest[opt] && zip.files[opt]) files.push(opt);
       }
-
       for (const name of files) {
         total++;
         const fbuf = await zip.files[name].async('arraybuffer');
         const actual = await sha256hex(fbuf);
         const expected = manifest[name] || '';
-        if (actual === expected) {
-          html += resultLine('pass', 'pass', `${name} &mdash; SHA-256 hash matches <span class="text-gray-400 text-xs font-mono">(${actual.substring(0,16)}&hellip;)</span>`);
-          passed++;
-        } else {
-          html += resultLine('fail', 'fail', `${name} &mdash; SHA-256 hash MISMATCH`);
-        }
+        if (actual.toLowerCase() === expected.toLowerCase()) { html += resultLine('pass', `${name} &mdash; SHA-256 match <span class="font-mono text-xs text-gray-400">(${actual.substring(0,16)}…)</span>`); passed++; }
+        else html += resultLine('fail', `${name} &mdash; SHA-256 MISMATCH`);
       }
 
-      // Hash chain
       if (zip.files['forensic_log.json'] && zip.files['chain_of_custody.json']) {
         total++;
         const flStr = await zip.files['forensic_log.json'].async('string');
         const cocStr = await zip.files['chain_of_custody.json'].async('string');
-        const fl = JSON.parse(flStr);
-        const coc = JSON.parse(cocStr);
+        const fl = JSON.parse(flStr); const coc = JSON.parse(cocStr);
         const flHash = await sha256hex(new TextEncoder().encode(flStr));
-        const hashOk = flHash === coc.forensic_log_hash;
+        const hashOk = flHash.toLowerCase() === (coc.forensic_log_hash || '').toLowerCase();
         const chainOk = !fl.hash_chain || fl.hash_chain.chain_valid;
-        const idOk = fl.evidence_id === coc.evidence.evidence_id;
-        if (hashOk && chainOk && idOk) {
-          html += resultLine('pass', 'pass', `Hash chain intact &mdash; ${fl.total_operations || '?'} operations, ISO/IEC 27037 compliant`);
-          passed++;
-        } else {
-          html += resultLine('fail', 'fail', 'Hash chain integrity check FAILED');
+        const cocId = coc.evidence_id || (coc.evidence && coc.evidence.evidence_id);
+        const idOk = fl.evidence_id === cocId;
+        const ops = fl.total_operations || (fl.hash_chain && fl.hash_chain.total_operations) || (fl.events && fl.events.length) || '?';
+        if (hashOk && chainOk && idOk) { html += resultLine('pass', `Hash chain intact (${ops} operations)`); passed++; }
+        else {
+          const reasons = [];
+          if (!hashOk) reasons.push('forensic log hash mismatch');
+          if (!chainOk) reasons.push('chain integrity invalid');
+          if (!idOk) reasons.push('evidence ID mismatch');
+          html += resultLine('fail', `Hash chain check FAILED (${reasons.join(', ')})`);
         }
       } else {
-        html += resultLine('warn', 'warn', 'Hash chain not present (older evidence package)');
+        html += resultLine('warn', 'Hash chain not present (older evidence package)');
       }
 
-      // OTS — not counted in pass/fail (browser can't verify against Bitcoin)
-      if (zip.files['manifest.json.ots']) {
-        html += resultLine('pass', 'pass', 'OpenTimestamps Bitcoin blockchain proof included in evidence package');
-      }
+      if (zip.files['manifest.json.ots']) html += resultLine('info', 'OpenTimestamps Bitcoin proof included (CLI for chain verification)');
 
-      // eIDAS TSR
       if (zip.files['manifest.json.tsr']) {
         total++;
         const tsrBuf = await zip.files['manifest.json.tsr'].async('arraybuffer');
         const tsrBytes = new Uint8Array(tsrBuf);
-        if (tsrBytes[0] === 0x30) {
-          let found = false;
-          for (let i = 0; i < Math.min(tsrBytes.length, 20); i++) {
-            if (tsrBytes[i]===0x02 && tsrBytes[i+1]===0x01 && tsrBytes[i+2]===0x00) { found=true; break; }
-          }
-          if (found) { html += resultLine('pass', 'pass', 'eIDAS qualified timestamp &mdash; valid structure (PKIStatus=granted, RFC 3161)'); passed++; }
-          else { html += resultLine('fail', 'fail', 'eIDAS timestamp &mdash; PKIStatus not granted'); }
-        } else { html += resultLine('fail', 'fail', 'eIDAS timestamp &mdash; invalid ASN.1 structure'); }
+        const expectedHash = isFileCert ? manifest.file_sha256 : await sha256hex(manifestBytes);
+        const insp = await inspectTimestamp(tsrBytes, expectedHash);
+        if (insp.error) html += resultLine('fail', `eIDAS TSR: ${esc(insp.error)}`);
+        else if (insp.overallValid) {
+          html += resultLine('pass', `eIDAS qualified timestamp valid (TSA: ${esc(insp.tsa?.cn || 'unknown')})`);
+          if (insp.timestampedAt) html += resultLine('info', `Timestamped at ${esc(insp.timestampedAt)}`);
+          passed++;
+        } else if (insp.hashCovers === false) {
+          html += resultLine('fail', 'eIDAS timestamp does NOT cover this manifest');
+        } else {
+          html += resultLine('warn', 'eIDAS structurally valid; full LTV requires CLI');
+          passed++;
+        }
       }
 
-      // Overall
+      if (zip.files['eidas_validation.json']) html += resultLine('info', 'eIDAS LTV data included (use CLI for full chain + OCSP)');
+
       const allOk = passed === total;
-      if (allOk) {
-        html += `<div class="mt-4 bg-green-50 border border-green-200 rounded-xl px-6 py-4 text-center">
-          <p class="text-green-700 font-semibold text-base">ALL CHECKS PASSED (${passed}/${total})</p>
-          <p class="text-green-600 text-sm mt-1">Evidence package integrity verified successfully.</p>
-        </div>`;
-      } else {
-        html += `<div class="mt-4 bg-red-50 border border-red-200 rounded-xl px-6 py-4 text-center">
-          <p class="text-red-700 font-semibold text-base">VERIFICATION FAILED (${passed}/${total} passed)</p>
-          <p class="text-red-600 text-sm mt-1">One or more integrity checks did not pass.</p>
-        </div>`;
+      const pkgLabel = isFileCert ? 'File Certification' : 'Evidence';
+      if (allOk) html += `<div class="mt-4 bg-green-50 border border-green-200 rounded-xl px-6 py-4 text-center"><p class="text-green-700 font-semibold">ALL CHECKS PASSED (${passed}/${total})</p><p class="text-green-600 text-sm mt-1">${pkgLabel} package integrity verified.</p></div>`;
+      else html += `<div class="mt-4 bg-red-50 border border-red-200 rounded-xl px-6 py-4 text-center"><p class="text-red-700 font-semibold">VERIFICATION FAILED (${passed}/${total} passed)</p></div>`;
+
+      if (isFileCert && manifest.file_sha256) {
+        let certName = 'unknown';
+        try { if (zip.files['chain_of_custody.json']) certName = JSON.parse(await zip.files['chain_of_custody.json'].async('string')).file?.name || 'unknown'; } catch {}
+        allCertHashes.push({ hash: manifest.file_sha256, name: certName });
       }
-
     } catch (err) {
-      html += resultLine('fail', 'fail', `Error: ${esc(err.message)}`);
+      html += resultLine('fail', `Error: ${esc(err.message)}`);
     }
-
-    resultsContent.innerHTML = html;
-    resetButton();
+    return html;
   }
 
-  function resetButton() {
-    verifyBtn.disabled = false;
-    btnText.textContent = 'Verify Evidence Package';
-    spinnerEl.classList.add('hidden');
+  function buildOriginalFileVerifyUI(hashes) {
+    const count = hashes.length;
+    const label = count === 1 ? 'Verify original file matches certificate:' : `Verify original files match certificates (${count}):`;
+    return `<div class="mt-4 bg-white border border-gray-200 rounded-xl px-4 py-3">
+      <p class="text-sm font-semibold mb-2">${label}</p>
+      <label for="orig-file-verify" class="flex flex-col items-center justify-center w-full h-16 border border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+        <p class="text-xs text-gray-500">${count === 1 ? 'Drop original file or click to select' : 'Drop original file(s) — multiple supported'}</p>
+        <input id="orig-file-verify" type="file" ${count > 1 ? 'multiple' : ''} class="hidden" />
+      </label>
+      <div id="orig-file-verify-result"></div>
+    </div>`;
   }
+
+  function attachOriginalFileHandlers() {
+    const inp = $('orig-file-verify');
+    if (!inp) return;
+    inp.addEventListener('change', async e => {
+      const files = e.target.files; if (!files || files.length === 0) return;
+      const resEl = $('orig-file-verify-result'); if (!resEl) return;
+      let html = '';
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const fbuf = await f.arrayBuffer();
+        const h = await sha256hex(fbuf);
+        const match = allCertHashes.find(c => c.hash.toLowerCase() === h.toLowerCase());
+        if (match) html += '<div class="mt-2 text-sm"><b style="color:#008000">&#10003; File matches certificate</b> &mdash; ' + esc(f.name) + '</div>';
+        else html += '<div class="mt-2 text-sm"><b style="color:#D00000">&#10007; File does NOT match</b> &mdash; ' + esc(f.name) + ' hash mismatch.</div>';
+      }
+      resEl.innerHTML = html;
+    });
+  }
+
+  async function runZipVerification() {
+    const file = $('zip-file-input').files[0];
+    if (!file) return;
+    setBusy(true);
+    $('zip-verify-button').disabled = true;
+    allCertHashes = [];
+    let html = '';
+    try {
+      const buf = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf);
+      const innerZipNames = Object.keys(zip.files).filter(f => f.endsWith('.zip') && !f.includes('/'));
+      if (innerZipNames.length > 0 && !zip.files['manifest.json']) {
+        html += resultLine('info', `<strong>Batch certificate package</strong> &mdash; ${innerZipNames.length} files`);
+        for (const name of innerZipNames) {
+          html += `<div class="mt-3 mb-1 font-semibold text-sm text-gray-700 border-t pt-3">${esc(name)}</div>`;
+          try { html += await verifySingleZip(await zip.files[name].async('arraybuffer')); }
+          catch (err) { html += resultLine('fail', `${esc(name)}: ${esc(err.message)}`); }
+        }
+      } else {
+        html += await verifySingleZip(buf);
+      }
+      if (allCertHashes.length > 0) html += buildOriginalFileVerifyUI(allCertHashes);
+      showResults(html);
+      attachOriginalFileHandlers();
+    } catch (err) {
+      showResults(resultLine('fail', `Error: ${esc(err.message)}`));
+    } finally {
+      $('zip-verify-button').disabled = false;
+      setBusy(false);
+    }
+  }
+
+  /* ========================================================================
+   * Mode 2: File + TSR
+   * ====================================================================== */
+  function maybeEnableFtButton() {
+    $('ft-verify-button').disabled = !($('ft-file-input').files[0] && $('ft-tsr-input').files[0]);
+  }
+  attachDropzone('ft-file-dropzone', 'ft-file-input', 'ft-file-name', () => {
+    const f = $('ft-file-input').files[0];
+    if (f) { $('ft-file-name').textContent = f.name; $('ft-file-name').classList.remove('hidden'); }
+    maybeEnableFtButton();
+  });
+  attachDropzone('ft-tsr-dropzone', 'ft-tsr-input', 'ft-tsr-name', () => {
+    const f = $('ft-tsr-input').files[0];
+    if (f) { $('ft-tsr-name').textContent = f.name; $('ft-tsr-name').classList.remove('hidden'); }
+    maybeEnableFtButton();
+  });
+  $('ft-verify-button').addEventListener('click', async () => {
+    const fileFile = $('ft-file-input').files[0];
+    const tsrFile = $('ft-tsr-input').files[0];
+    if (!fileFile || !tsrFile) return;
+    setBusy(true);
+    $('ft-verify-button').disabled = true;
+    try {
+      const fileBuf = await fileFile.arrayBuffer();
+      const tsrBuf = await tsrFile.arrayBuffer();
+      const fileHash = await sha256hex(fileBuf);
+      const insp = await inspectTimestamp(new Uint8Array(tsrBuf), fileHash);
+      let html = resultLine('info', `<strong>File:</strong> ${esc(fileFile.name)} &mdash; ${(fileFile.size/1024).toFixed(1)} KB`);
+      html += resultLine('info', `<strong>SHA-256:</strong> <span class="font-mono text-xs">${esc(fileHash)}</span>`);
+      if (insp.hashCovers === true) html += resultLine('pass', 'Timestamp covers this exact file');
+      else if (insp.hashCovers === false) html += resultLine('fail', 'Hash MISMATCH — this timestamp does NOT cover this file');
+      html += renderInspection(insp);
+      showResults(html);
+    } catch (err) {
+      showResults(resultLine('fail', `Error: ${esc(err.message)}`));
+    } finally {
+      maybeEnableFtButton();
+      setBusy(false);
+    }
+  });
+
+  /* ========================================================================
+   * Mode 3: Inspect TSR alone
+   * ====================================================================== */
+  attachDropzone('ins-dropzone-label', 'ins-tsr-input', 'ins-filename', () => {
+    if ($('ins-tsr-input').files[0]) {
+      $('ins-filename').textContent = $('ins-tsr-input').files[0].name;
+      $('ins-filename').classList.remove('hidden');
+      $('ins-verify-button').disabled = false;
+    }
+  });
+  $('ins-verify-button').addEventListener('click', async () => {
+    const f = $('ins-tsr-input').files[0]; if (!f) return;
+    setBusy(true);
+    $('ins-verify-button').disabled = true;
+    try {
+      const tsrBuf = await f.arrayBuffer();
+      const insp = await inspectTimestamp(new Uint8Array(tsrBuf));
+      showResults(renderInspection(insp));
+    } catch (err) {
+      showResults(resultLine('fail', `Error: ${esc(err.message)}`));
+    } finally {
+      $('ins-verify-button').disabled = false;
+      setBusy(false);
+    }
+  });
   </script>
 </body>
 </html>

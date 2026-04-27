@@ -51,3 +51,45 @@ export interface EidasLtvData {
   crlUrl: string | null;
   crlResponse: string | null;
 }
+
+export interface TsaInfo {
+  commonName: string | null;
+  organization: string | null;
+  country: string | null;
+  serialNumberHex: string | null;
+  validFrom: string | null;
+  validUntil: string | null;
+}
+
+export interface TimestampInspectionResult {
+  tsa: TsaInfo;
+  timestampedAt: string | null;
+  hashAlgorithm: string;
+  messageImprint: string;
+  policyOid: string | null;
+  serialNumber: string | null;
+  signatureValid: boolean;
+  certChainValid: boolean;
+  trustsKnownEUTL: boolean;
+  trustedRootMatch: { commonName: string; country: string } | null;
+  ocspValid: boolean | null;
+  warnings: string[];
+  errors: string[];
+  overallValid: boolean;
+}
+
+export interface FileTimestampResult {
+  fileName?: string;
+  fileSize: number;
+  fileHash: string;
+  hashAlgorithm: string;
+  hashCoversFile: boolean;
+  tsr: TimestampInspectionResult;
+  overallValid: boolean;
+}
+
+export interface InspectOptions {
+  ltvData?: EidasLtvData;
+  trustedRootsPem?: string;
+  expectedHash?: string;
+}

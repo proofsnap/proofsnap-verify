@@ -84,3 +84,19 @@ export async function verify(zipBuffer: ArrayBuffer): Promise<VerifyResult> {
     overallValid,
   };
 }
+
+// Re-export public API for library consumers
+export { inspectTimestamp } from "./inspectTimestamp";
+export { verifyFileWithTimestamp } from "./verifyFileWithTimestamp";
+export type {
+  VerifyResult,
+  FileCheckResult,
+  HashChainResult,
+  OtsResult,
+  EidasResult,
+  EidasLtvData,
+  TsaInfo,
+  TimestampInspectionResult,
+  FileTimestampResult,
+  InspectOptions,
+} from "./types";

@@ -1,7 +1,7 @@
 {
   "name": "proofsnap-verify",
-  "version": "1.0.0",
-  "description": "Open-source verification tool for ProofSnap evidence packages. Independently verify SHA-256 hashes, RSA-4096 signatures, OpenTimestamps, and eIDAS qualified timestamps.",
+  "version": "1.5.0",
+  "description": "Open-source verifier for ProofSnap evidence packages, file + eIDAS timestamps, and any RFC 3161 qualified timestamp from any EU TSA. Three modes: ZIP, file+timestamp, inspect.",
   "main": "dist/verify.js",
   "types": "dist/verify.d.ts",
   "bin": {
@@ -16,6 +16,7 @@
   "bugs": "https://github.com/proofsnap/proofsnap-verify/issues",
   "files": [
     "dist/",
+    "data/",
     "LICENSE",
     "README.md"
   ],

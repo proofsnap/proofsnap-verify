@@ -1,8 +1,19 @@
 # proofsnap-verify
 
-Open-source verification tool for [ProofSnap](https://getproofsnap.com) evidence packages. Independently verify the integrity of forensic web captures — no trust in ProofSnap required.
+Open-source verification tool for [ProofSnap](https://getproofsnap.com) evidence packages, eIDAS qualified timestamps, and any RFC 3161 time-stamp token from any EU TSA.
 
-## What it verifies
+> **Don't trust us. Trust the math.**
+> Three independent verification modes, all client-side. No upload, no account.
+
+## Three modes
+
+| Mode | Input | What it verifies |
+|---|---|---|
+| **ZIP** | `evidence.zip` | RSA-4096 signature, every file SHA-256, hash chain, OpenTimestamps, eIDAS LTV |
+| **File + Timestamp** | any file + `.tsr` | File SHA-256 == TSR message imprint, TSA signature, cert chain, TSA identity |
+| **Inspect Timestamp** | `.tsr` alone | TSA identity, timestamp time, hash algorithm, policy OID, signature, chain |
+
+## What it verifies (ZIP mode)
 
 | Check | Description |
 |---|---|
@@ -12,85 +23,104 @@ Open-source verification tool for [ProofSnap](https://getproofsnap.com) evidence
 | **OpenTimestamps** | Verifies `manifest.json.ots` against Bitcoin blockchain via calendar servers |
 | **eIDAS Timestamp** | Offline LTV verification of `manifest.json.tsr` (TSA signature, cert chain, OCSP) |
 
+The ZIP-mode crypto is byte-for-byte identical to the verifier built into the ProofSnap Chrome Extension. The standalone TSR modes additionally resolve the TSA signer certificate by trying every embedded certificate against the TSR signature, so they handle TSRs that the Chrome extension's blind `tsaCertChain[0]` lookup would miss.
+
 ## Quick Start
 
-### Option 1: Web Verifier (no install needed)
+### Option 1: Web Verifier (no install)
 
-1. Open `web/index.html` in any modern browser (Chrome, Firefox, Safari, Edge)
-2. Drag and drop a ProofSnap evidence ZIP onto the page
-3. Results appear instantly — everything runs in your browser, nothing is uploaded
+1. Open `web/index.html` in any modern browser, or visit [getproofsnap.com/verify](https://getproofsnap.com/verify)
+2. Pick a tab — **Evidence ZIP** / **File + Timestamp** / **Inspect Timestamp**
+3. Drop your file(s). Results appear instantly. Nothing leaves your browser.
+
+> Browser mode skips OCSP fetching (CORS) and EUTL trust matching. For full LTV, use the CLI.
 
 ### Option 2: CLI
 
-**Prerequisites:** [Node.js 18+](https://nodejs.org/) installed on your machine.
-
-**Run without installing (recommended):**
+**Prerequisites:** [Node.js 18+](https://nodejs.org/).
 
 ```bash
+# ZIP mode (default — auto-detected from .zip extension)
 npx proofsnap-verify evidence.zip
+
+# File + Timestamp mode
+npx proofsnap-verify --file myfile.pdf --tsr myfile.tsr
+
+# Inspect a TSR alone (auto-detected from .tsr extension)
+npx proofsnap-verify stamp.tsr
+# or explicit:
+npx proofsnap-verify --inspect-tsr stamp.tsr
+
+# JSON output for scripting / CI
+npx proofsnap-verify evidence.zip --json
+npx proofsnap-verify stamp.tsr --json
+
+# Provide custom trusted roots bundle
+npx proofsnap-verify --inspect-tsr stamp.tsr --roots my-eutl-roots.pem
+
+# Or via env var
+PROOFSNAP_TRUSTED_ROOTS=/path/to/roots.pem npx proofsnap-verify stamp.tsr
 ```
 
-**Or install globally:**
+Exit code: `0` = all checks passed, `1` = any check failed, `2` = bad arguments.
 
-```bash
-npm install -g proofsnap-verify
-proofsnap-verify evidence.zip
-```
-
-**Or clone and build from source:**
-
-```bash
-git clone https://github.com/proofsnap/proofsnap-verify.git
-cd proofsnap-verify
-npm install
-npm run build
-node dist/index.js /path/to/evidence.zip
-```
-
-### Option 3: Use as a library in your own code
+### Option 3: Use as a library
 
 ```bash
 npm install proofsnap-verify
 ```
 
 ```typescript
-import { verify } from "proofsnap-verify";
+import {
+  verify,
+  verifyFileWithTimestamp,
+  inspectTimestamp,
+} from "proofsnap-verify";
 import { readFileSync } from "fs";
 
-async function main() {
-  const zipBuffer = readFileSync("evidence.zip");
-  const result = await verify(zipBuffer.buffer);
+// 1. Verify a ProofSnap evidence ZIP
+const zipBuf = readFileSync("evidence.zip");
+const zipResult = await verify(zipBuf.buffer);
+console.log(zipResult.overallValid);
 
-  console.log(result.overallValid); // true/false
-  console.log(result.signature);    // { valid: true, algorithm: "RSA-4096 ..." }
-  console.log(result.files);        // [{ name, expected, actual, match }]
-  console.log(result.ots);          // { verified, bitcoinHeight, timestamp }
-  console.log(result.eidas);        // { hashMatch, signatureValid, certChainValid, ... }
-}
+// 2. Verify any file against a standalone .tsr token
+const file = readFileSync("contract.pdf");
+const tsr = readFileSync("contract.tsr");
+const fileResult = await verifyFileWithTimestamp(
+  new Uint8Array(file),
+  new Uint8Array(tsr)
+);
+console.log(fileResult.hashCoversFile, fileResult.tsr.tsa);
 
-main();
+// 3. Inspect a TSR alone — extract TSA identity, time, etc.
+const tsrOnly = readFileSync("stamp.tsr");
+const inspection = await inspectTimestamp(new Uint8Array(tsrOnly));
+console.log(inspection.tsa.commonName);   // "Disig Time Stamping Authority"
+console.log(inspection.timestampedAt);     // "2026-04-13T10:23:11.000Z"
+console.log(inspection.signatureValid);    // true
 ```
 
-## CLI Options
+## Trusted root resolution (EUTL)
 
-```bash
-# Human-readable output (default)
-proofsnap-verify evidence.zip
+The CLI ships a **stub** EUTL bundle in `data/eutl-tsa-roots.pem` — by default the file is empty and the verifier emits a warning that EUTL trust is unverified, but signature + chain consistency are still checked.
 
-# JSON output (for scripting / CI pipelines)
-proofsnap-verify evidence.zip --json
+To enable full EUTL trust resolution:
 
-# Show help
-proofsnap-verify --help
+1. Build a PEM bundle from the [EU LOTL XML](https://ec.europa.eu/tools/lotl/eu-lotl.xml) (extract every QTSP root that lists a Time Stamping service)
+2. Inject the bundle via one of:
+   - CLI flag: `--roots my-eutl.pem`
+   - Env var: `PROOFSNAP_TRUSTED_ROOTS=/path/to/roots.pem`
+   - Programmatic: `import { overrideDefaultTrustedRoots } from "proofsnap-verify/dist/trustedRoots"` and call it with the PEM string before invoking `inspectTimestamp` / `verifyFileWithTimestamp`
+
+When no match is found against the bundle (including the empty-stub case), the verifier emits a `TRUST UNVERIFIED` warning but still reports signature and chain consistency results.
+
+A `scripts/refresh-eutl.ts` helper for automated bundle regeneration is on the roadmap.
+
+## Example output (ZIP mode)
+
 ```
-
-Exit code: `0` = all checks passed, `1` = any check failed.
-
-## Example output
-
-```
-ProofSnap Evidence Verifier v1.0.0
-===================================
+ProofSnap Evidence Verifier v1.5.0 — ZIP mode
+==============================================
 
 Evidence ID: ps_a1b2c3d4-e5f6-7890
 
@@ -107,6 +137,35 @@ Evidence ID: ps_a1b2c3d4-e5f6-7890
 [PASS] eIDAS LTV: all checks passed (HASH_MATCH, SIGNATURE_VALID, CERT_CHAIN_VALID, OCSP_GOOD)
 
 Result: ALL CHECKS PASSED (11/11)
+```
+
+## Example output (Inspect Timestamp mode)
+
+```
+ProofSnap Verifier v1.5.0 — Inspect TSR
+========================================
+
+Time-Stamp Authority
+  Common Name:  Disig Time Stamping Authority TSA-Q-A1
+  Organization: Disig a.s.
+  Country:      SK
+  Cert valid:   2024-02-23T... → 2029-02-23T...
+  Cert serial:  1060062ed9b25b048400000000000005e2
+
+Timestamp
+  Issued at:    2026-04-13T10:23:11.000Z
+  Hash algo:    SHA-256
+  Hash value:   a1b2c3d4e5f6...
+  Policy OID:   1.3.158.36061701.0.0.2.4.0
+  Serial:       7e1c8a...
+
+Verification
+[PASS] TSR signature valid
+[PASS] Certificate chain consistent
+[WARN] Trusted root: not matched against EUTL bundle
+[WARN] OCSP: not checked
+
+Result: TIMESTAMP VALID
 ```
 
 ## How it works
@@ -128,6 +187,8 @@ A ProofSnap evidence ZIP contains:
 - `eidas_validation.json` — LTV data for offline TSR verification
 
 This tool recomputes every hash, verifies the signature, validates the hash chain, and checks both blockchain and eIDAS timestamps — all independently, without contacting ProofSnap servers.
+
+For File + Timestamp and Inspect modes, the tool parses RFC 3161 TimeStampResponses directly: it iterates over every certificate embedded in the CMS SignedData `certificates` set and selects the one whose public key actually verifies the TSR signature (falling back to the leaf if none verifies, so the result is still inspectable), validates the signature over `signedAttrs`, and walks the certificate chain to a self-signed root (optionally matched against a bundled EUTL list). The chain itself is assumed to be in leaf-to-root order — scrambled embedded certificates are not currently reordered.
 
 ## Requirements
 

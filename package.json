@@ -1,35 +1,41 @@
 {
   "name": "proofsnap-verify",
-  "version": "1.5.0",
-  "description": "Open-source verifier for ProofSnap evidence packages, file + eIDAS timestamps, and any RFC 3161 qualified timestamp from any EU TSA. Three modes: ZIP, file+timestamp, inspect.",
-  "main": "dist/verify.js",
-  "types": "dist/verify.d.ts",
+  "version": "2.0.0",
+  "description": "Independent verifier for every ProofSnap evidence package (Chrome extension, API, dashboard, matter exports, deliveries) and for any RFC 3161 qualified timestamp or OpenTimestamps proof. Runs in Node and in the browser, no upload.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "proofsnap-verify": "dist/index.js"
+    "proofsnap-verify": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "prepublishOnly": "npm run build"
+    "build": "tsc && node scripts/build-browser.mjs",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "refresh-eutl": "node scripts/refresh-eutl.mjs",
+    "start": "node dist/cli.js",
+    "prepublishOnly": "npm test",
+    "prepack": "npm run build"
   },
   "homepage": "https://github.com/proofsnap/proofsnap-verify",
   "bugs": "https://github.com/proofsnap/proofsnap-verify/issues",
   "files": [
     "dist/",
-    "data/",
     "LICENSE",
     "README.md"
   ],
   "keywords": [
-    "proofsnap",
-    "evidence",
-    "verification",
-    "sha256",
-    "opentimestamps",
-    "eidas",
-    "digital-forensics",
     "blockchain",
-    "timestamp"
+    "digital-forensics",
+    "eidas",
+    "eutl",
+    "evidence",
+    "evidence-package",
+    "opentimestamps",
+    "proofsnap",
+    "rfc3161",
+    "sha256",
+    "timestamp",
+    "trusted-list",
+    "verification"
   ],
   "author": "ProofSnap <support@getproofsnap.com>",
   "license": "MIT",
@@ -38,14 +44,11 @@
     "url": "https://github.com/proofsnap/proofsnap-verify"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "jszip": "^3.10.1",
-    "opentimestamps": "^0.4.9"
+    "node": ">=20.12.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.4.0"
   }
 }
